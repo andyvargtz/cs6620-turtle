@@ -1,0 +1,19 @@
+//  legal test case
+       
+VAR flag;
+
+FOR flag=1 STEP 1 TO n DO
+BEGIN
+    GO 32;
+    GO 32+1-2*3/4;
+    
+    TURN 90.2;
+    
+    TURN flag;
+    TURN sin 30;
+    TURN cos 60;
+    TURN sqrt (20+2)*3;
+    ;
+    
+    JUMP 100*2;
+END

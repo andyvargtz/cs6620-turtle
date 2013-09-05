@@ -1,0 +1,8 @@
+PROCEDURE proc(arg1, arg2)
+{ IF (arg1 > 0) THEN
+  { a(arg1-1,arg2);
+    TURN 90;
+  }
+  ELSE
+    GO arg2;
+}

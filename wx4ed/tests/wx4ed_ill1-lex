@@ -1,0 +1,3 @@
+VAR len;
+
+len = 0x2B;
