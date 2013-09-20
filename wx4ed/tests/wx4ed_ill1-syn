@@ -1,0 +1,56 @@
+VAR alpha;
+VAR c;
+VAR n;
+VAR i;
+
+JUMP 100;
+TURN 90;
+JUMP 100;
+TURN -90;
+
+alpha = 77.77;
+c = 200;
+
+n=50;
+i = 1;
+
+// illegal case: undefined while-loop
+// illegal case: undefined operator <
+// illegal case: undefined closure nota‭tion {}
+WHILE (i<n) {
+  TURN alpha;
+  c=200*i/n;
+  GO c;
+  TURN -alpha-90;
+  GO sin alpha * c;
+  TURN -90;
+  GO cos alpha *c;
+  
+  // illegal case: undefined if-else
+  // illegal case: undefined operator ==
+  IF (i/2==0) BEGIN
+    TURN 180;
+  END
+  ELSE BEGIN
+    // illegal case: undefined operator >>
+    TURN 180 >> 2;
+  END
+  
+  TURN 2*360/n;
+  
+  // illegal case: undefined operators ++, -= and +=
+  i++;
+  i-=1;
+  i+=1;
+}
+
+// illegal case: undefined PROCEDURE struct
+PROCEDURE a(level,dist)
+{ IF (level > 0) THEN
+  { TURN -45; a(level-1,dist);
+    TURN 90; b(level-1,dist);
+    TURN -45;
+  }
+  ELSE
+    GO dist;
+}

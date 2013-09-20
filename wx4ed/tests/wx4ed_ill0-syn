@@ -1,0 +1,60 @@
+VAR sqrlen;
+
+// illegal case: : neglect the semicolon
+VAR i
+
+// illegal case: lower case of keyword
+var n;
+
+// illegal case: illegal variable name
+VAR new_var1;
+VAR NewVar2;
+ 
+VAR degree;
+
+// illegal case: using undefined variables (the compiler won't detect such errors, and my ps reader doesn't care about it.)
+width = 612;
+height = 792;
+
+JUMP width/2;
+TURN 90;
+JUMP height/2;
+TURN -90;
+
+sqrlen = 5*10;
+// illegal case: incomplete expression
+n = 500+;
+degree = 40.0/2;
+
+// illegal case: a value couldn't be assigned to another value
+0=1;
+
+
+FOR i=1 STEP 1 TO n DO
+BEGIN
+    GO sqrlen;
+    TURN 90;
+    GO sqrlen;
+    TURN 90;
+    GO sqrlen;
+    TURN 90;
+    GO sqrlen;
+    
+    TURN 90+45;
+    GO sqrlen / sin(15+30);
+    
+    TURN -45-90;
+    JUMP sqrlen;
+    TURN -90-45;
+    GO sqrlen / cos 45;
+    
+    TURN -45-90;
+    JUMP sqrlen;
+    
+    sqrlen = sqrlen / (1 + sqrt 0.5) ;
+    TURN degree;
+    
+    degree = degree-1;
+
+// illegal case: END is missing    
+//END

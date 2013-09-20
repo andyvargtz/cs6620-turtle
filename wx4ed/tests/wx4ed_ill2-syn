@@ -1,0 +1,36 @@
+VAR alpha;
+
+// illegal case: variable type error
+VAR* pointer;
+VAR[] array;
+
+//illegal case: define multiple variables at a time
+VAR c, n;
+
+//illegal case: initiate value of variable.
+VAR i=1;
+
+JUMP 100;
+TURN 90;
+JUMP 100;
+TURN -90;
+
+alpha = 77.77;
+c = 200;
+
+// illegal case: divided by zero, genarating an illegal ps file.
+n=50 / 0;
+
+FOR i=1 STEP 1 TO n DO
+BEGIN
+  TURN alpha;
+  c=200*i/n;
+  GO c;
+  TURN -alpha-90;
+  GO sin alpha * c;
+  TURN -90;
+  GO cos alpha *c;
+  TURN 180;
+  TURN 2*360/n;
+END
+
