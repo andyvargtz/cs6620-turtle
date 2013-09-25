@@ -30,6 +30,12 @@
 %type <n> decl
 %type <n> decllist
 
+%right ASSIGN
+%nonassoc EQUAL NE
+%nonassoc GREATER GE LESS LE
+%left PLUS MINUS
+%left TIMES DIV
+
 %%
 program: head decllist stmtlist tail;
 
@@ -41,7 +47,7 @@ head: { printf("%%!PS Adobe\n"
 
 tail: { printf("stroke\n"); };
 
-decllist: ;
+decllist: { printf("seen empty decllist"); };
 decllist: decllist decl;
 
 decl: VAR ID SEMICOLON { printf("/tlt%s 0 def\n",$2->symbol);} ;
@@ -62,19 +68,27 @@ stmt: FOR ID ASSIGN expr
 	     stmt {printf("} for\n");};
 
 stmt: WHILE OPEN {printf("{ ");}
-        relate CLOSE {printf("\n{} {exit} ifelse \n");}
+        cond CLOSE {printf("\n{} {exit} ifelse \n");}
         stmt {printf("} loop\n");};
-      
+// if and if-else conflict, use the first one
+stmt: IF OPEN cond CLOSE {printf("\n{ \n");}
+        stmt ELSE {printf("} {\n");}
+        stmt {printf("} ifelse closepath\n");};
+        
+stmt: IF OPEN cond CLOSE {printf("\n{ \n");}
+        stmt {printf("} if \n");};
 
+
+     
 stmt: COPEN stmtlist CCLOSE;	 
 
-relate: expr EQUAL expr { printf("eq ");};
-relate: expr NE expr { printf("ne ");};
-relate: expr GREATER expr { printf("gt ");};
-relate: expr GE expr { printf("ge ");};
-relate: expr LESS expr { printf("lt ");};
-relate: expr LE expr { printf("le ");};
-relate: expr;
+cond: expr EQUAL expr { printf("eq ");};
+cond: expr NE expr { printf("ne ");};
+cond: expr GREATER expr { printf("gt ");};
+cond: expr GE expr { printf("ge ");};
+cond: expr LESS expr { printf("lt ");};
+cond: expr LE expr { printf("le ");};
+cond: expr;
 
 expr: expr PLUS term { printf("add ");};
 expr: expr MINUS term { printf("sub ");};
