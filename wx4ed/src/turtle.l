@@ -81,6 +81,7 @@ sqrt            return SQRT;
 
 %%
 // for test
+/*
 main()
 {
     char* token_table[400];
@@ -136,3 +137,4 @@ main()
         else { printf("[Undefined token] %d: %s\n", t, yytext);}
     }
 }
+*/
