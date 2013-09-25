@@ -67,6 +67,7 @@ sqrt            return SQRT;
 "=="            return EQUAL;
 "<="            return LE;
 ">="            return GE;
+"!="            return NE;
 
 {identifier}    { yylval.n = lookup(yytext);
                   if (yylval.n==NULL)

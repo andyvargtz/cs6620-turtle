@@ -57,6 +57,8 @@
 #define PROCEDURE 297
 #define COMMA 298
 
+#define NE 299
+
 
 
 typedef union YYSTYPE
