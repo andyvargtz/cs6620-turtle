@@ -8,12 +8,24 @@
 
 %token GO TURN VAR JUMP
 %token FOR STEP TO DO
+
 %token COPEN CCLOSE
 %token SIN COS SQRT
 %token <d> FLOAT
 %token <n> ID               
 %token <i> NUMBER       
 %token SEMICOLON PLUS MINUS TIMES DIV OPEN CLOSE ASSIGN
+
+%token UP DOWN
+%token NORTH EAST WEST SOUTH
+%token IF THEN ELSE
+
+%token GREATER LESS
+%token EQUAL GE LE NE
+
+%token WHILE
+%token PROCEDURE
+%token COMMA
 
 %type <n> decl
 %type <n> decllist
@@ -49,7 +61,20 @@ stmt: FOR ID ASSIGN expr
 	  DO {printf("{ /tlt%s exch store\n",$2->symbol);} 
 	     stmt {printf("} for\n");};
 
+stmt: WHILE OPEN {printf("{ ");}
+        relate CLOSE {printf("\n{} {exit} ifelse \n");}
+        stmt {printf("} loop\n");};
+      
+
 stmt: COPEN stmtlist CCLOSE;	 
+
+relate: expr EQUAL expr { printf("eq ");};
+relate: expr NE expr { printf("ne ");};
+relate: expr GREATER expr { printf("gt ");};
+relate: expr GE expr { printf("ge ");};
+relate: expr LESS expr { printf("lt ");};
+relate: expr LE expr { printf("le ");};
+relate: expr;
 
 expr: expr PLUS term { printf("add ");};
 expr: expr MINUS term { printf("sub ");};

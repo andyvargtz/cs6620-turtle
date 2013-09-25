@@ -51,13 +51,14 @@
 #define EQUAL 293
 #define GE 294
 #define LE 295
+#define NE 296
 
-#define WHILE 296
+#define WHILE 297
 
-#define PROCEDURE 297
-#define COMMA 298
+#define PROCEDURE 298
+#define COMMA 299
 
-#define NE 299
+
 
 
 
