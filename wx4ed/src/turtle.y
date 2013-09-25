@@ -36,6 +36,10 @@
 %left PLUS MINUS
 %left TIMES DIV
 
+//%nonassoc after_if_cond
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
+
 %%
 program: head decllist stmtlist tail;
 
@@ -47,7 +51,7 @@ head: { printf("%%!PS Adobe\n"
 
 tail: { printf("stroke\n"); };
 
-decllist: { printf("seen empty decllist"); };
+decllist: ;
 decllist: decllist decl;
 
 decl: VAR ID SEMICOLON { printf("/tlt%s 0 def\n",$2->symbol);} ;
@@ -71,12 +75,15 @@ stmt: WHILE OPEN {printf("{ ");}
         cond CLOSE {printf("\n{} {exit} ifelse \n");}
         stmt {printf("} loop\n");};
 // if and if-else conflict, use the first one
-stmt: IF OPEN cond CLOSE {printf("\n{ \n");}
+
+after_if_cond: CLOSE {printf("\n{ ");};
+
+stmt: IF OPEN cond after_if_cond//{printf("\n{ \n");}
         stmt ELSE {printf("} {\n");}
-        stmt {printf("} ifelse closepath\n");};
+        stmt {printf("} ifelse \nclosepath\n");};
         
-stmt: IF OPEN cond CLOSE {printf("\n{ \n");}
-        stmt {printf("} if \n");};
+stmt: IF OPEN cond after_if_cond//{printf("\n{ \n");}
+        stmt %prec LOWER_THAN_ELSE {printf("} if \n");};
 
 
      
