@@ -26,6 +26,8 @@
 %token WHILE
 %token PROCEDURE
 %token COMMA
+%token CALL
+%token PARAM
 
 %type <n> decl
 %type <n> decllist
@@ -85,6 +87,15 @@ stmt: IF OPEN cond after_if_cond//{printf("\n{ \n");}
 stmt: IF OPEN cond after_if_cond//{printf("\n{ \n");}
         stmt %prec LOWER_THAN_ELSE {printf("} if \n");};
 
+stmt: PROCEDURE ID {printf("/proc%s { \n", $2->symbol);}
+        stmt {printf("} def\n");};
+
+stmt: CALL ID param SEMICOLON {printf("proc%s \nclosepath\n",$2->symbol);};
+
+param: param param_ele;
+param: param_ele;
+param_ele: NUMBER {printf("%d ",$1);};
+param_ele: FLOAT {printf("%f ",$1);};
 
      
 stmt: COPEN stmtlist CCLOSE;	 
@@ -117,6 +128,7 @@ factor: atomic;
 atomic: OPEN expr CLOSE;
 atomic: NUMBER {printf("%d ",$1);};
 atomic: FLOAT {printf("%f ",$1);};
+atomic: PARAM;
 atomic: ID {printf("tlt%s ", $1->symbol);};
 
 

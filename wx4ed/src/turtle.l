@@ -47,6 +47,8 @@ ELSE            return ELSE;
 WHILE           return WHILE;
 
 PROCEDURE       return PROCEDURE;
+CALL            return CALL;
+PARAM           return PARAM;
 
 sin             return SIN;
 cos             return COS;
