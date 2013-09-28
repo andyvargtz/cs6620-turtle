@@ -94,9 +94,9 @@ stmt: CALL ID param SEMICOLON {printf("proc%s \nclosepath\n",$2->symbol);};
 
 param: param param_ele;
 param: param_ele;
-param_ele: NUMBER {printf("%d ",$1);};
-param_ele: FLOAT {printf("%f ",$1);};
-
+//param_ele: NUMBER {printf("%d ",$1);};
+//param_ele: FLOAT {printf("%f ",$1);};
+param_ele: factor;
      
 stmt: COPEN stmtlist CCLOSE;	 
 
