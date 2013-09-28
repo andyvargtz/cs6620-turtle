@@ -76,8 +76,8 @@ stmt: FOR ID ASSIGN expr
 stmt: WHILE OPEN {printf("{ ");}
         cond CLOSE {printf("\n{} {exit} ifelse \n");}
         stmt {printf("} loop\n");};
+        
 // if and if-else conflict, use the first one
-
 after_if_cond: CLOSE {printf("\n{ ");};
 
 stmt: IF OPEN cond after_if_cond//{printf("\n{ \n");}
@@ -93,9 +93,7 @@ stmt: PROCEDURE ID {printf("/proc%s { \n", $2->symbol);}
 stmt: CALL ID param SEMICOLON {printf("proc%s \nclosepath\n",$2->symbol);};
 
 param: param param_ele;
-param: param_ele;
-//param_ele: NUMBER {printf("%d ",$1);};
-//param_ele: FLOAT {printf("%f ",$1);};
+param: ;
 param_ele: factor;
      
 stmt: COPEN stmtlist CCLOSE;	 
@@ -122,8 +120,6 @@ factor: SIN factor { printf("sin ");};
 factor: COS factor { printf("cos ");};
 factor: SQRT factor { printf("sqrt ");};
 factor: atomic;
-
-
 
 atomic: OPEN expr CLOSE;
 atomic: NUMBER {printf("%d ",$1);};
