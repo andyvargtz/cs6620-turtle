@@ -8,6 +8,7 @@
 
 %token GO TURN VAR JUMP
 %token FOR STEP TO DO
+
 %token COPEN CCLOSE
 %token SIN COS SQRT
 %token <d> FLOAT
@@ -15,8 +16,31 @@
 %token <i> NUMBER       
 %token SEMICOLON PLUS MINUS TIMES DIV OPEN CLOSE ASSIGN
 
+%token UP DOWN
+%token NORTH EAST WEST SOUTH
+%token IF THEN ELSE
+
+%token GREATER LESS
+%token EQUAL GE LE NE
+
+%token WHILE
+%token PROCEDURE
+%token COMMA
+%token CALL
+%token PARAM
+
 %type <n> decl
 %type <n> decllist
+
+%right ASSIGN
+%nonassoc EQUAL NE
+%nonassoc GREATER GE LESS LE
+%left PLUS MINUS
+%left TIMES DIV
+
+//%nonassoc after_if_cond
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 
 %%
 program: head decllist stmtlist tail;
@@ -49,7 +73,38 @@ stmt: FOR ID ASSIGN expr
 	  DO {printf("{ /tlt%s exch store\n",$2->symbol);} 
 	     stmt {printf("} for\n");};
 
+stmt: WHILE OPEN {printf("{ ");}
+        cond CLOSE {printf("\n{} {exit} ifelse \n");}
+        stmt {printf("} loop\n");};
+        
+// if and if-else conflict, use the first one
+after_if_cond: CLOSE {printf("\n{ ");};
+
+stmt: IF OPEN cond after_if_cond//{printf("\n{ \n");}
+        stmt ELSE {printf("} {\n");}
+        stmt {printf("} ifelse \nclosepath\n");};
+        
+stmt: IF OPEN cond after_if_cond//{printf("\n{ \n");}
+        stmt %prec LOWER_THAN_ELSE {printf("} if \n");};
+
+stmt: PROCEDURE ID {printf("/proc%s { \n", $2->symbol);}
+        stmt {printf("} def\n");};
+
+stmt: CALL ID param SEMICOLON {printf("proc%s \nclosepath\n",$2->symbol);};
+
+param: param param_ele;
+param: ;
+param_ele: factor;
+     
 stmt: COPEN stmtlist CCLOSE;	 
+
+cond: expr EQUAL expr { printf("eq ");};
+cond: expr NE expr { printf("ne ");};
+cond: expr GREATER expr { printf("gt ");};
+cond: expr GE expr { printf("ge ");};
+cond: expr LESS expr { printf("lt ");};
+cond: expr LE expr { printf("le ");};
+cond: expr;
 
 expr: expr PLUS term { printf("add ");};
 expr: expr MINUS term { printf("sub ");};
@@ -66,11 +121,10 @@ factor: COS factor { printf("cos ");};
 factor: SQRT factor { printf("sqrt ");};
 factor: atomic;
 
-
-
 atomic: OPEN expr CLOSE;
 atomic: NUMBER {printf("%d ",$1);};
 atomic: FLOAT {printf("%f ",$1);};
+atomic: PARAM;
 atomic: ID {printf("tlt%s ", $1->symbol);};
 
 
