@@ -1,0 +1,27 @@
+// Test case: DIV 0 error
+// Test result: Translator didn't complain an error, and generate an illegal ps file.
+VAR i;
+TURN 45;
+i = 10/0;
+GO i;
+
+
+// Test case: sqrt a negative number.
+// Test result: Translator didn't complain an error, and generate an illegal ps file.
+VAR a;
+TURN 60;
+a = sqrt -40000;
+GO a;
+
+
+// Test case: Precedence of the operators.
+// Test result: OK.
+TURN 45;
+IF (1+2*3-2/-2 == 8) {
+    GO 100;
+}
+JUMP -100;
+TURN 15;
+IF (sin 30 *2 == 1) {
+    GO (sin 30) * 2* 100;
+}

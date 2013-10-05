@@ -1,0 +1,13 @@
+// Test case: if-if-else statement
+// Test reslut: Get an expected choice.
+TURN 45;
+IF (1>0)
+    //
+IF (1<0)
+    // unexpected
+    GO 200;
+ELSE
+    // expected
+    GO 300;
+
+

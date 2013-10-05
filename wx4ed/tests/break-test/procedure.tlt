@@ -1,0 +1,27 @@
+// Test case: inconsist parameter counts in PROCEDURE and CALL
+// Test result: translator didn't complain an error, and generate an illegal ps file.
+
+PROCEDURE poly {
+GO 40;
+TURN PARAM;
+GO 40;
+TURN PARAM;
+}
+CALL poly 80;
+
+
+// Test case: complex parameters with expression.
+// Test result: PASS
+CALL poly 80 + 20, 30;
+
+
+// Test case: Reference undefined PROCEDURE
+// Test result: Translator didn't complain an error, and generate an illegal ps file.
+CALL xwl 100;
+
+
+
+// Test case: Reference PARAM outside the PROCEDURE scope
+// Test result: Translator didn't complain an error, but generate a legal ps file.
+TURN 90;
+GO PARAM;

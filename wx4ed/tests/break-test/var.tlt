@@ -1,0 +1,17 @@
+// Test case: Reference uninitiated variable.
+// Test result: Translator didn't complain an error, and generate an illegal ps file.
+VAR a;
+JUMP a;
+
+
+// Test case: Reference undeclared variable
+// Test result: Translator didn't complain an error, but generate a legal ps file.
+i = 10;
+GO i;
+
+
+// Test case: Reference undefined variable
+// Test result: translator didn't complain an error, and generate an illegal ps file.
+GO j;
+
+
