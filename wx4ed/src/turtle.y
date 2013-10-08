@@ -94,7 +94,7 @@ stmt: CALL ID param SEMICOLON {printf("proc%s \nclosepath\n",$2->symbol);};
 
 param: param param_ele;
 param: ;
-param_ele: factor;
+param_ele: expr;
      
 stmt: COPEN stmtlist CCLOSE;	 
 
