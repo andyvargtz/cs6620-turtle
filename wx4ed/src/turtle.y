@@ -104,7 +104,7 @@ cond: expr GREATER expr { printf("gt ");};
 cond: expr GE expr { printf("ge ");};
 cond: expr LESS expr { printf("lt ");};
 cond: expr LE expr { printf("le ");};
-cond: expr;
+cond: expr {printf("0 ne ");};
 
 expr: expr PLUS term { printf("add ");};
 expr: expr MINUS term { printf("sub ");};
