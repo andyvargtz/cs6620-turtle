@@ -51,7 +51,7 @@ head: { printf("%%!PS Adobe\n"
 	       );
       };
 
-tail: { printf("stroke\n"); };
+tail: { printf("closepath\nstroke\n"); };
 
 decllist: ;
 decllist: decllist decl;
@@ -82,7 +82,7 @@ after_if_cond: CLOSE {printf("\n{ ");};
 
 stmt: IF OPEN cond after_if_cond//{printf("\n{ \n");}
         stmt ELSE {printf("} {\n");}
-        stmt {printf("} ifelse \nclosepath\n");};
+        stmt {printf("} ifelse \n");};
         
 stmt: IF OPEN cond after_if_cond//{printf("\n{ \n");}
         stmt %prec LOWER_THAN_ELSE {printf("} if \n");};
@@ -90,7 +90,7 @@ stmt: IF OPEN cond after_if_cond//{printf("\n{ \n");}
 stmt: PROCEDURE ID {printf("/proc%s { \n", $2->symbol);}
         stmt {printf("} def\n");};
 
-stmt: CALL ID param SEMICOLON {printf("proc%s \nclosepath\n",$2->symbol);};
+stmt: CALL ID param SEMICOLON {printf("proc%s \n",$2->symbol);};
 
 param: param param_ele;
 param: ;
