@@ -44,14 +44,35 @@ void yyerror(const char *msg); // standard error-handling routine
     char *stringConstant;
     double doubleConstant;
     char identifier[MaxIdentLen+1]; // +1 for terminating null
+    
+    Program *program;
+    
     Decl *decl;
+    List<Decl*> *declList;
     VarDecl *var;
+    List<VarDecl*> *varList;
     FnDecl *fDecl;
+    ClassDecl *cDecl;
+    InterfaceDecl *iDecl;
+    
     Type *type;
+    NamedType *namedType;
+    List<NamedType*> *namedTypeList;
+    
     Stmt *stmt;
     List<Stmt*> *stmtList;
-    List<VarDecl*> *varList;
-    List<Decl*> *declList;
+    StmtBlock *stmtBlock;
+    ForStmt *forStmt;
+    WhileStmt *whileStmt;
+    IfStmt *ifStmt;
+    BreakStmt *breakStmt;
+    ReturnStmt *returnStmt;
+    PrintStmt *printStmt;
+    
+    Expr *expr;
+    List<Expr*> *exprList;
+    Call *call;
+    LValue *lValue;
 }
 
 
@@ -87,12 +108,37 @@ void yyerror(const char *msg); // standard error-handling routine
  */
 %type <declList>  DeclList 
 %type <decl>      Decl
+
 %type <type>      Type 
+
 %type <var>       Variable VarDecl
 %type <varList>   Formals FormalList VarDecls
 %type <fDecl>     FnDecl FnHeader
+%type <cDecl>     ClassDecl
+%type <iDecl>     InterfaceDecl
+
 %type <stmtList>  StmtList
 %type <stmt>      StmtBlock
+%type <forStmt>         ForStmt
+%type <whileStmt>       WhileStmt
+%type <ifStmt>          IfStmt
+%type <breakStmt>       BreakStmt
+%type <returnStmt>      ReturnStmt
+%type <printStmt>       PrintStmt
+
+%nonassoc '='
+%left     T_Or
+%left     T_And
+%left     T_Equal T_NotEqual
+%nonassoc '<' T_LessEqual '>' T_GreaterEqual
+%left     '+' '-'
+%left     '*' '/' '%'
+%nonassoc NOT MINUS
+%left     '[' '.'
+%nonassoc T_NONELSE
+%nonassoc T_Else
+
+
 %%
 /* Rules
  * -----
@@ -117,6 +163,12 @@ DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
 
 Decl      :    VarDecl              { $$=$1; }
           |    FnDecl               { $$=$1; }
+          |    ClassDecl              { $$=$1; }
+          |    InterfaceDecl            { $$=$1; }
+;
+
+VarDecls  :    VarDecls VarDecl     { ($$=$1)->Append($2); }
+          |    /* empty*/           { $$ = new List<VarDecl*>; }
 ;
 
 VarDecl   :    Variable ';'         { $$=$1; }
@@ -151,15 +203,138 @@ FormalList:    FormalList ',' Variable
           |    Variable             { ($$ = new List<VarDecl*>)->Append($1); }
 ;
 
+ClassDecl   :   T_Class T_Identifier ClassExt ClassImpl '{' FieldList '}'
+;
+
+ClassExt    :   T_Extends T_Identifier
+            |   /* empty */
+;
+
+ClassImpl   :   T_Implements ImplList
+            |   /* empty */
+;
+
+ImplList    :   ImplList ',' T_Identifier
+            |   T_Identifier
+;
+
+FieldList   :   FieldList Field
+            |   /* empty */
+;
+
+Field       :   VarDecl
+            |   FnDecl
+;
+
+InterfaceDecl   :   T_Interface T_Identifier '{' PrototypeList '}'
+;
+
+PrototypeList:   PrototypeList Prototype
+            |   /* empty */
+;
+
+Prototype   :   Type T_Identifier '(' Formals ')' ';'
+            |   T_Void T_Identifier '(' Formals ')' ';'
+;
+
+
 StmtBlock :    '{' VarDecls StmtList '}' 
                                     { $$ = new StmtBlock($2, $3); }
+          |    '{' VarDecls '}' 
 ;
 
-VarDecls  : VarDecls VarDecl     { ($$=$1)->Append($2); }
-          | /* empty*/           { $$ = new List<VarDecl*>; }
+
+//StmtList  : /* empty, add your grammar */  { $$ = new List<Stmt*>; }
+//;
+
+StmtList  :     StmtList Stmt
+          //|     /* empty */
+          |     Stmt
 ;
 
-StmtList  : /* empty, add your grammar */  { $$ = new List<Stmt*>; }
+Stmt      :     ExprOpt ';'
+          |     IfStmt
+          |     WhileStmt
+          |     ForStmt
+          |     BreakStmt
+          |     ReturnStmt
+          |     PrintStmt
+          |     StmtBlock
+;
+
+IfStmt    :     T_If '(' Expr ')' Stmt %prec T_NONELSE
+          |     T_If '(' Expr ')' Stmt T_Else Stmt
+;
+
+WhileStmt :     T_While '(' Expr ')' Stmt
+;
+
+ForStmt   :     T_For '(' ExprOpt ';' Expr ';' ExprOpt ')' Stmt
+;
+
+ReturnStmt:     T_Return ExprOpt ';'
+;
+
+BreakStmt :     T_Break ';'
+;
+
+PrintStmt :     T_Print '(' ExprPlus ')' ';'
+;
+
+ExprOpt     :   Expr
+            |   // empty
+;
+
+ExprPlus    :   ExprPlus ',' Expr
+            |   Expr
+;
+
+Expr        :   LValue '=' Expr
+            |   Constant
+            |   LValue
+            |   T_This
+            |   Call
+            |   '(' Expr ')'
+            |   Expr '+' Expr
+            |   Expr '-' Expr
+            |   Expr '*' Expr
+            |   Expr '/' Expr
+            |   Expr '%' Expr
+            |   '-' Expr  %prec MINUS
+            |   Expr '<' Expr
+            |   Expr T_LessEqual Expr
+            |   Expr '>' Expr
+            |   Expr T_GreaterEqual Expr
+            |   Expr T_Equal Expr
+            |   Expr T_NotEqual Expr
+            |   Expr T_And Expr
+            |   Expr T_Or Expr
+            |   '!' Expr %prec NOT
+            |   T_ReadInteger '(' ')'
+            |   T_ReadLine '(' ')'
+            |   T_New '(' T_Identifier ')'
+            |   T_NewArray '(' Expr ',' Type ')'
+;
+
+LValue      :   T_Identifier
+            |   Expr '.' T_Identifier
+            |   '.' T_Identifier  //?
+            |   Expr '[' Expr ']'
+;
+
+Call        :   T_Identifier '(' Actuals ')'
+            |   Expr '.' T_Identifier '(' Actuals ')'
+;
+
+Actuals     :   ExprPlus
+            |   //empty
+;
+
+Constant    :   T_IntConstant
+            |   T_DoubleConstant
+            |   T_BoolConstant
+            |   T_StringConstant
+            |   T_Null
 ;
 
 %%
