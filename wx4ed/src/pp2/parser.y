@@ -87,6 +87,7 @@ void yyerror(const char *msg); // standard error-handling routine
 %token   T_And T_Or T_Null T_Extends T_This T_Interface T_Implements
 %token   T_While T_For T_If T_Else T_Return T_Break
 %token   T_New T_NewArray T_Print T_ReadInteger T_ReadLine
+%token   T_Incr T_Decr
 
 %token   <identifier> T_Identifier
 %token   <stringConstant> T_StringConstant 
@@ -292,6 +293,8 @@ ExprPlus    :   ExprPlus ',' Expr
 Expr        :   LValue '=' Expr
             |   Constant
             |   LValue
+            |   LValue T_Incr
+            |   LValue T_Decr
             |   T_This
             |   Call
             |   '(' Expr ')'
