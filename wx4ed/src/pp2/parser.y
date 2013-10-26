@@ -226,7 +226,7 @@ FormalList:    FormalList ',' Variable
 ClassDecl   :   T_Class T_Identifier ClassExt ClassImpl '{' FieldList '}' { $$ = new ClassDecl((new Identifier(@2, $2)),$3, $4, $6);}
 ;
 
-ClassExt    :   T_Extends T_Identifier { $$ = new NamedType(new Identifier(@2, $2));}
+ClassExt    :   T_Extends T_Identifier  { $$ = new NamedType(new Identifier(@2, $2));}
             |   /* empty */             { $$ = NULL; }
 ;
 
@@ -257,18 +257,14 @@ Prototype   :   Type T_Identifier '(' Formals ')' ';'   { $$ = new FnDecl((new I
             |   T_Void T_Identifier '(' Formals ')' ';' { $$ = new FnDecl((new Identifier(@2, $2)),Type::voidType, $4);}
 ;
 
-
+// conflict here
+// VarDecls and StmtList should not both produce epsilon
 StmtBlock :    '{' VarDecls StmtList '}' 
                                     { $$ = new StmtBlock($2, $3); }
           |    '{' VarDecls '}'     { $$ = new StmtBlock($2, new List<Stmt *>); }
 ;
 
-
-//StmtList  : /* empty, add your grammar */  { $$ = new List<Stmt*>; }
-//;
-
 StmtList  :     StmtList Stmt       { ($$ = $1)->Append($2); }
-          //|     /* empty */
           |     Stmt                { ($$ = new List<Stmt*>)->Append($1); }
 ;
 
@@ -357,13 +353,11 @@ Expr        :   LValue '=' Expr     { $$ = new AssignExpr($1,(new Operator(@2, "
 
 LValue      :   T_Identifier            { $$ = new FieldAccess(NULL, (new Identifier(@1, $1))); }
             |   Expr '.' T_Identifier   { $$ = new FieldAccess($1, (new Identifier(@3, $3))); }
-            //|   '.' T_Identifier        { $$ = new FieldAccess(NULL,(new Identifier(@2, $2)));} //?
             |   Expr '[' Expr ']'       { $$ = new ArrayAccess(@1, $1, $3); }
 ;
 
 Call        :   T_Identifier '(' Actuals ')'            { $$ = new Call(@1, NULL, (new Identifier(@1, $1)), $3); }
             |   Expr '.' T_Identifier '(' Actuals ')'   { $$ = new Call(@1, $1, (new Identifier(@3, $3)), $5); }
-            //|   '.' T_Identifier '(' Actuals ')'        { $$ = new Call(@1, NULL, (new Identifier(@2, $2)), $4); }
 ;
 
 Actuals     :   ExprPlus        { $$ = $1; }
