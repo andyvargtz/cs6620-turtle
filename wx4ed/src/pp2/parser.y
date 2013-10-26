@@ -65,6 +65,10 @@ void yyerror(const char *msg); // standard error-handling routine
     ForStmt *forStmt;
     WhileStmt *whileStmt;
     IfStmt *ifStmt;
+    SwitchStmt *switchStmt;
+    SwitchStmt::CaseStmt *caseStmt;
+    List<SwitchStmt::CaseStmt*> *caseStmtList;
+    SwitchStmt::DefaultStmt *defaultStmt;
     BreakStmt *breakStmt;
     ReturnStmt *returnStmt;
     PrintStmt *printStmt;
@@ -107,19 +111,25 @@ void yyerror(const char *msg); // standard error-handling routine
  * of the union named "declList" which is of type List<Decl*>.
  * pp2: You'll need to add many of these of your own.
  */
-%type <declList>  DeclList 
-%type <decl>      Decl
+%type <program>         Program
+ 
+%type <declList>  DeclList PrototypeList FieldList
+%type <decl>      Decl Field
 
 %type <type>      Type 
 
 %type <var>       Variable VarDecl
 %type <varList>   Formals FormalList VarDecls
-%type <fDecl>     FnDecl FnHeader
+%type <fDecl>     FnDecl FnHeader Prototype
 %type <cDecl>     ClassDecl
 %type <iDecl>     InterfaceDecl
 
-%type <stmtList>  StmtList
-%type <stmt>      StmtBlock
+%type <namedType>       ClassExt
+%type <namedTypeList>   ClassImpl ImplList
+
+%type <stmt>            Stmt
+%type <stmtList>        StmtList
+%type <stmtBlock>       StmtBlock
 %type <forStmt>         ForStmt
 %type <whileStmt>       WhileStmt
 %type <ifStmt>          IfStmt
@@ -127,6 +137,14 @@ void yyerror(const char *msg); // standard error-handling routine
 %type <returnStmt>      ReturnStmt
 %type <printStmt>       PrintStmt
 %type <switchStmt>      SwitchStmt
+%type <caseStmt>        CaseStmt
+%type <caseStmtList>    CaseStmts
+%type <defaultStmt>     DefaultStmt
+
+%type <expr>            Expr ExprOpt Constant
+%type <exprList>        ExprPlus Actuals
+%type <call>            Call
+%type <lValue>          LValue
 
 %nonassoc '='
 %left     T_Or
@@ -135,7 +153,7 @@ void yyerror(const char *msg); // standard error-handling routine
 %nonassoc '<' T_LessEqual '>' T_GreaterEqual
 %left     '+' '-'
 %left     '*' '/' '%'
-%nonassoc NOT MINUS
+%nonassoc NOT MINUS T_Incr T_Decr
 %left     '[' '.'
 %nonassoc T_NONELSE
 %nonassoc T_Else
@@ -165,8 +183,8 @@ DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
 
 Decl      :    VarDecl              { $$=$1; }
           |    FnDecl               { $$=$1; }
-          |    ClassDecl              { $$=$1; }
-          |    InterfaceDecl            { $$=$1; }
+          |    ClassDecl            { $$=$1; }
+          |    InterfaceDecl        { $$=$1; }
 ;
 
 VarDecls  :    VarDecls VarDecl     { ($$=$1)->Append($2); }
@@ -205,157 +223,158 @@ FormalList:    FormalList ',' Variable
           |    Variable             { ($$ = new List<VarDecl*>)->Append($1); }
 ;
 
-ClassDecl   :   T_Class T_Identifier ClassExt ClassImpl '{' FieldList '}'
+ClassDecl   :   T_Class T_Identifier ClassExt ClassImpl '{' FieldList '}' { $$ = new ClassDecl((new Identifier(@2, $2)),$3, $4, $6);}
 ;
 
-ClassExt    :   T_Extends T_Identifier
-            |   /* empty */
+ClassExt    :   T_Extends T_Identifier { $$ = new NamedType(new Identifier(@2, $2));}
+            |   /* empty */             { $$ = NULL; }
 ;
 
-ClassImpl   :   T_Implements ImplList
-            |   /* empty */
+ClassImpl   :   T_Implements ImplList   { $$ = $2; }
+            |   /* empty */             { $$ = new List<NamedType*>; }
 ;
 
-ImplList    :   ImplList ',' T_Identifier
-            |   T_Identifier
+ImplList    :   ImplList ',' T_Identifier   { ($$ = $1)->Append(new NamedType(new Identifier(@3, $3))); }
+            |   T_Identifier                { ($$ = new List<NamedType*>)->Append(new NamedType(new Identifier(@1, $1)));}
 ;
 
-FieldList   :   FieldList Field
-            |   /* empty */
+FieldList   :   FieldList Field         { ($$ = $1)->Append($2); }
+            |   /* empty */             { $$ = new List<Decl*>; }
 ;
 
-Field       :   VarDecl
-            |   FnDecl
+Field       :   VarDecl                 { $$ = $1; }
+            |   FnDecl                  { $$ = $1; }
 ;
 
-InterfaceDecl   :   T_Interface T_Identifier '{' PrototypeList '}'
+InterfaceDecl   :   T_Interface T_Identifier '{' PrototypeList '}'  { $$ = new InterfaceDecl((new Identifier(@2, $2)), $4);}
 ;
 
-PrototypeList:   PrototypeList Prototype
-            |   /* empty */
+PrototypeList:   PrototypeList Prototype    { ($$ = $1)->Append($2); }
+            |   /* empty */                 { $$ = new List<Decl*>; }
 ;
 
-Prototype   :   Type T_Identifier '(' Formals ')' ';'
-            |   T_Void T_Identifier '(' Formals ')' ';'
+Prototype   :   Type T_Identifier '(' Formals ')' ';'   { $$ = new FnDecl((new Identifier(@2, $2)),$1, $4);}
+            |   T_Void T_Identifier '(' Formals ')' ';' { $$ = new FnDecl((new Identifier(@2, $2)),Type::voidType, $4);}
 ;
 
 
 StmtBlock :    '{' VarDecls StmtList '}' 
                                     { $$ = new StmtBlock($2, $3); }
-          |    '{' VarDecls '}' 
+          |    '{' VarDecls '}'     { $$ = new StmtBlock($2, new List<Stmt *>); }
 ;
 
 
 //StmtList  : /* empty, add your grammar */  { $$ = new List<Stmt*>; }
 //;
 
-StmtList  :     StmtList Stmt
+StmtList  :     StmtList Stmt       { ($$ = $1)->Append($2); }
           //|     /* empty */
-          |     Stmt
+          |     Stmt                { ($$ = new List<Stmt*>)->Append($1); }
 ;
 
-Stmt      :     ExprOpt ';'
-          |     IfStmt
-          |     WhileStmt
-          |     ForStmt
-          |     BreakStmt
-          |     ReturnStmt
-          |     PrintStmt
-          |     SwitchStmt
-          |     StmtBlock
+Stmt      :     ExprOpt ';'         { $$ = $1; }
+          |     IfStmt              { $$ = $1; }
+          |     WhileStmt           { $$ = $1; }
+          |     ForStmt             { $$ = $1; }
+          |     BreakStmt           { $$ = $1; }
+          |     ReturnStmt          { $$ = $1; }
+          |     PrintStmt           { $$ = $1; }
+          |     SwitchStmt          { $$ = $1; }
+          |     StmtBlock           { $$ = $1; }
 ;
 
-IfStmt    :     T_If '(' Expr ')' Stmt %prec T_NONELSE
-          |     T_If '(' Expr ')' Stmt T_Else Stmt
+IfStmt    :     T_If '(' Expr ')' Stmt %prec T_NONELSE  { $$ = new IfStmt($3, $5, NULL); }
+          |     T_If '(' Expr ')' Stmt T_Else Stmt      { $$ = new IfStmt($3, $5, $7); }
 ;
 
-WhileStmt :     T_While '(' Expr ')' Stmt
+WhileStmt :     T_While '(' Expr ')' Stmt               { $$ = new WhileStmt($3, $5); }
 ;
 
-ForStmt   :     T_For '(' ExprOpt ';' Expr ';' ExprOpt ')' Stmt
+ForStmt   :     T_For '(' ExprOpt ';' Expr ';' ExprOpt ')' Stmt { $$ = new ForStmt($3, $5, $7, $9); }
 ;
 
-ReturnStmt:     T_Return ExprOpt ';'
+ReturnStmt:     T_Return ExprOpt ';'                    { $$ = new ReturnStmt(@1, $2); }
 ;
 
-BreakStmt :     T_Break ';'
+BreakStmt :     T_Break ';'                             { $$ = new BreakStmt(@1); }
 ;
 
-PrintStmt :     T_Print '(' ExprPlus ')' ';'
+PrintStmt :     T_Print '(' ExprPlus ')' ';'            { $$ = new PrintStmt($3); }
 ;
 
-SwitchStmt  :   T_Switch '(' Expr ')' '{' CaseStmts DefaultStmt '}'
+SwitchStmt  :   T_Switch '(' Expr ')' '{' CaseStmts DefaultStmt '}' { $$ = new SwitchStmt($3, $6, $7); }
 ;
 
-CaseStmts   :   CaseStmts CaseStmt
-            |   CaseStmt
+CaseStmts   :   CaseStmts CaseStmt      { ($$ = $1)->Append($2); }
+            |   CaseStmt                { ($$ = new List<SwitchStmt::CaseStmt*>)->Append($1);}
 ;
 
-CaseStmt    :   T_Case T_IntConstant ':' StmtList
-            |   T_Case T_IntConstant ':'
+CaseStmt    :   T_Case T_IntConstant ':' StmtList   { $$ = new SwitchStmt::CaseStmt((new IntConstant(@2, $2)), $4); }
+            |   T_Case T_IntConstant ':'            { $$ = new SwitchStmt::CaseStmt((new IntConstant(@2, $2)),(new List<Stmt*>));}
 ;
 
-DefaultStmt :   T_Default ':' StmtList
-            |   T_Default ':'
-            |   /* empty */
+DefaultStmt :   T_Default ':' StmtList      { $$ = new SwitchStmt::DefaultStmt($3); }
+            |   T_Default ':'               { $$ = new SwitchStmt::DefaultStmt(new List<Stmt*>);}
+            |   /* empty */                 { $$ = new SwitchStmt::DefaultStmt(new List<Stmt*>);}
 ;
 
-ExprOpt     :   Expr
-            |   // empty
+ExprOpt     :   Expr                { $$ = $1; }
+            |   /* empty */         { $$ = new EmptyExpr(); }
 ;
 
-ExprPlus    :   ExprPlus ',' Expr
-            |   Expr
+ExprPlus    :   ExprPlus ',' Expr   { ($$ = $1)->Append($3); }
+            |   Expr                { ($$ = new List<Expr*>)->Append($1); }
 ;
 
-Expr        :   LValue '=' Expr
-            |   Constant
-            |   LValue
-            |   LValue T_Incr
-            |   LValue T_Decr
-            |   T_This
-            |   Call
-            |   '(' Expr ')'
-            |   Expr '+' Expr
-            |   Expr '-' Expr
-            |   Expr '*' Expr
-            |   Expr '/' Expr
-            |   Expr '%' Expr
-            |   '-' Expr  %prec MINUS
-            |   Expr '<' Expr
-            |   Expr T_LessEqual Expr
-            |   Expr '>' Expr
-            |   Expr T_GreaterEqual Expr
-            |   Expr T_Equal Expr
-            |   Expr T_NotEqual Expr
-            |   Expr T_And Expr
-            |   Expr T_Or Expr
-            |   '!' Expr %prec NOT
-            |   T_ReadInteger '(' ')'
-            |   T_ReadLine '(' ')'
-            |   T_New '(' T_Identifier ')'
-            |   T_NewArray '(' Expr ',' Type ')'
+Expr        :   LValue '=' Expr     { $$ = new AssignExpr($1,(new Operator(@2, "=")), $3); }
+            |   Constant            { $$ = $1; }
+            |   LValue              { $$ = $1; }
+            |   LValue T_Incr       { $$ = new PostfixExpr($1,(new Operator(@2, "++"))); }
+            |   LValue T_Decr       { $$ = new PostfixExpr($1,(new Operator(@2, "--"))); }
+            |   T_This              { $$ = new This(@1); }
+            |   Call                { $$ = $1; }
+            |   '(' Expr ')'        { $$ = $2; }
+            |   Expr '+' Expr       { $$ = new ArithmeticExpr($1,(new Operator(@2, "+")), $3); }
+            |   Expr '-' Expr       { $$ = new ArithmeticExpr($1,(new Operator(@2, "-")), $3); }
+            |   Expr '*' Expr       { $$ = new ArithmeticExpr($1,(new Operator(@2, "*")), $3); }
+            |   Expr '/' Expr       { $$ = new ArithmeticExpr($1,(new Operator(@2, "/")), $3); }
+            |   Expr '%' Expr       { $$ = new ArithmeticExpr($1,(new Operator(@2, "%")), $3); }
+            |   '-' Expr  %prec MINUS   { $$ = new ArithmeticExpr((new Operator(@1, "-")), $2); }
+            |   Expr '<' Expr       { $$ = new RelationalExpr($1,(new Operator(@2, "<")), $3); }
+            |   Expr T_LessEqual Expr   { $$ = new RelationalExpr($1,(new Operator(@2, "<=")), $3); }
+            |   Expr '>' Expr       { $$ = new RelationalExpr($1,(new Operator(@2, ">")), $3); }
+            |   Expr T_GreaterEqual Expr   { $$ = new RelationalExpr($1,(new Operator(@2, ">=")), $3); }
+            |   Expr T_Equal Expr   { $$ = new EqualityExpr($1,(new Operator(@2, "==")), $3); }
+            |   Expr T_NotEqual Expr{ $$ = new EqualityExpr($1,(new Operator(@2, "!=")), $3); }
+            |   Expr T_And Expr     { $$ = new LogicalExpr($1,(new Operator(@2, "&&")), $3); }
+            |   Expr T_Or Expr      { $$ = new LogicalExpr($1,(new Operator(@2, "||")), $3); }
+            |   '!' Expr %prec NOT  { $$ = new LogicalExpr((new Operator(@1, "!")), $2); }
+            |   T_ReadInteger '(' ')'           { $$ = new ReadIntegerExpr(@1); }
+            |   T_ReadLine '(' ')'              { $$ = new ReadLineExpr(@1); }
+            |   T_New '(' T_Identifier ')'      { $$ = new NewExpr(@1, (new NamedType(new Identifier(@3, $3)))); }
+            |   T_NewArray '(' Expr ',' Type ')'{ $$ = new NewArrayExpr(@1, $3, $5); }
 ;
 
-LValue      :   T_Identifier
-            |   Expr '.' T_Identifier
-            |   '.' T_Identifier  //?
-            |   Expr '[' Expr ']'
+LValue      :   T_Identifier            { $$ = new FieldAccess(NULL, (new Identifier(@1, $1))); }
+            |   Expr '.' T_Identifier   { $$ = new FieldAccess($1, (new Identifier(@3, $3))); }
+            //|   '.' T_Identifier        { $$ = new FieldAccess(NULL,(new Identifier(@2, $2)));} //?
+            |   Expr '[' Expr ']'       { $$ = new ArrayAccess(@1, $1, $3); }
 ;
 
-Call        :   T_Identifier '(' Actuals ')'
-            |   Expr '.' T_Identifier '(' Actuals ')'
+Call        :   T_Identifier '(' Actuals ')'            { $$ = new Call(@1, NULL, (new Identifier(@1, $1)), $3); }
+            |   Expr '.' T_Identifier '(' Actuals ')'   { $$ = new Call(@1, $1, (new Identifier(@3, $3)), $5); }
+            //|   '.' T_Identifier '(' Actuals ')'        { $$ = new Call(@1, NULL, (new Identifier(@2, $2)), $4); }
 ;
 
-Actuals     :   ExprPlus
-            |   //empty
+Actuals     :   ExprPlus        { $$ = $1; }
+            |   /*empty*/       { $$ = new List<Expr*>;}
 ;
 
-Constant    :   T_IntConstant
-            |   T_DoubleConstant
-            |   T_BoolConstant
-            |   T_StringConstant
-            |   T_Null
+Constant    :   T_IntConstant       { $$ = new IntConstant(@1, $1); }
+            |   T_DoubleConstant    { $$ = new DoubleConstant(@1, $1); }
+            |   T_BoolConstant      { $$ = new BoolConstant(@1, $1); }
+            |   T_StringConstant    { $$ = new StringConstant(@1, $1); }
+            |   T_Null              { $$ = new NullConstant(@1); }
 ;
 
 %%

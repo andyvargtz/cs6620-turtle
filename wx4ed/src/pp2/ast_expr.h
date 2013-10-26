@@ -104,8 +104,16 @@ class CompoundExpr : public Expr
     
   public:
     CompoundExpr(Expr *lhs, Operator *op, Expr *rhs); // for binary
-    CompoundExpr(Operator *op, Expr *rhs);             // for unary
+    CompoundExpr(Operator *op, Expr *rhs);            // for unary
+    CompoundExpr(Expr *lhs, Operator *op);            // for postfix
     void PrintChildren(int indentLevel);
+};
+
+class PostfixExpr : public CompoundExpr
+{
+  public:
+    PostfixExpr(Expr *lhs, Operator *op) : CompoundExpr(lhs,op) {}
+    const char *GetPrintNameForNode() { return "PostfixExpr"; }
 };
 
 class ArithmeticExpr : public CompoundExpr 

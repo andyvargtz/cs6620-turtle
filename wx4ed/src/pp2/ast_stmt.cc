@@ -85,3 +85,37 @@ void PrintStmt::PrintChildren(int indentLevel) {
 }
 
 
+SwitchStmt::SwitchStmt(Expr *e, List<CaseStmt*> *s, DefaultStmt *d) {
+    Assert(e != NULL && s != NULL && d != NULL);
+    (expr=e)->SetParent(this);
+    (caseStmts=s)->SetParentAll(this);
+    (defaultStmt=d)->SetParent(this);
+}
+
+void SwitchStmt::PrintChildren(int indentLevel) {
+    expr->Print(indentLevel+1);
+    caseStmts->PrintAll(indentLevel+1);
+    defaultStmt->Print(indentLevel+1);
+}
+
+SwitchStmt::CaseStmt::CaseStmt(Expr *e, List<Stmt*> *s) {
+    Assert(e != NULL && s != NULL);
+    (intConst=e)->SetParent(this);
+    (caseBody=s)->SetParentAll(this);
+}
+
+void SwitchStmt::CaseStmt::PrintChildren(int indentLevel) {
+    intConst->Print(indentLevel+1);
+    caseBody->PrintAll(indentLevel+1);
+}
+
+SwitchStmt::DefaultStmt::DefaultStmt(List<Stmt*> *s) {
+    Assert(s != NULL);
+    (defaultBody=s)->SetParentAll(this);
+}
+
+void SwitchStmt::DefaultStmt::PrintChildren(int indentLevel) {
+    defaultBody->PrintAll(indentLevel+1);
+}
+
+
