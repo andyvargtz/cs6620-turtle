@@ -87,7 +87,7 @@ void yyerror(const char *msg); // standard error-handling routine
 %token   T_And T_Or T_Null T_Extends T_This T_Interface T_Implements
 %token   T_While T_For T_If T_Else T_Return T_Break
 %token   T_New T_NewArray T_Print T_ReadInteger T_ReadLine
-%token   T_Incr T_Decr
+%token   T_Incr T_Decr T_Switch T_Case T_Default
 
 %token   <identifier> T_Identifier
 %token   <stringConstant> T_StringConstant 
@@ -126,6 +126,7 @@ void yyerror(const char *msg); // standard error-handling routine
 %type <breakStmt>       BreakStmt
 %type <returnStmt>      ReturnStmt
 %type <printStmt>       PrintStmt
+%type <switchStmt>      SwitchStmt
 
 %nonassoc '='
 %left     T_Or
@@ -260,6 +261,7 @@ Stmt      :     ExprOpt ';'
           |     BreakStmt
           |     ReturnStmt
           |     PrintStmt
+          |     SwitchStmt
           |     StmtBlock
 ;
 
@@ -280,6 +282,22 @@ BreakStmt :     T_Break ';'
 ;
 
 PrintStmt :     T_Print '(' ExprPlus ')' ';'
+;
+
+SwitchStmt  :   T_Switch '(' Expr ')' '{' CaseStmts DefaultStmt '}'
+;
+
+CaseStmts   :   CaseStmts CaseStmt
+            |   CaseStmt
+;
+
+CaseStmt    :   T_Case T_IntConstant ':' StmtList
+            |   T_Case T_IntConstant ':'
+;
+
+DefaultStmt :   T_Default ':' StmtList
+            |   T_Default ':'
+            |   /* empty */
 ;
 
 ExprOpt     :   Expr
