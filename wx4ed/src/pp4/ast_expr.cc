@@ -7,7 +7,6 @@
 #include "ast_decl.h"
 #include <string.h>
 
-#include "errors.h"
 
 
 IntConstant::IntConstant(yyltype loc, int val) : Expr(loc) {
