@@ -36,6 +36,11 @@ void yyerror(const char *msg); // standard error-handling routine
     Stmt *stmt;
     List<Stmt*> *stmtList;
     LValue *lvalue;
+    
+    SwitchStmt *switchStmt;
+    SwitchStmt::CaseStmt *caseStmt;
+    List<SwitchStmt::CaseStmt*> *caseStmtList;
+    SwitchStmt::DefaultStmt *defaultStmt;
 }
 
 
@@ -47,14 +52,13 @@ void yyerror(const char *msg); // standard error-handling routine
 %token   T_And T_Or T_Null T_Extends T_This T_Interface T_Implements
 %token   T_While T_For T_If T_Else T_Return T_Break
 %token   T_New T_NewArray T_Print T_ReadInteger T_ReadLine
-%token   T_Incr T_Decr T_Switch T_Case T_Default
+%token   T_Incr T_Decr T_Switch T_Case T_Default T_Colon
 
 %token   <identifier> T_Identifier
 %token   <stringConstant> T_StringConstant 
 %token   <integerConstant> T_IntConstant
 %token   <doubleConstant> T_DoubleConstant
 %token   <boolConstant> T_BoolConstant
-
 
 /* Non-terminal types
  * ------------------
@@ -72,6 +76,10 @@ void yyerror(const char *msg); // standard error-handling routine
 %type <exprList>  Actuals ExprList
 %type <stmt>      Stmt StmtBlock OptElse
 %type <stmtList>  StmtList
+
+%type <switchStmt>      SwitchStmt
+%type <caseStmt>        CaseStmt DefaultStmt
+%type <caseStmtList>    CaseStmts
 
   
 /* Precedence and associativity
@@ -212,7 +220,23 @@ Stmt      :    OptExpr ';'          { $$ = $1; }
           |    T_Print '(' ExprList ')' ';'  
                                     { $$ = new PrintStmt($3); }
           |    T_Break ';'          { $$ = new BreakStmt(@1); }
+          |    SwitchStmt           { $$ = $1; }
           ;
+
+SwitchStmt:    T_Switch '(' Expr ')' '{' CaseStmts DefaultStmt '}' { if ($7) $6->Append($7);
+                                                                     $$ = new SwitchStmt($3, $6);}
+          ;
+
+CaseStmts :    CaseStmts CaseStmt   { ($$ = $1)->Append($2); }
+          |    CaseStmt             { ($$ = new List<SwitchStmt::CaseStmt*>)->Append($1);}
+          ;
+                                    // why colon could not be recognized? but comma did!!!
+CaseStmt  :    T_Case T_IntConstant T_Colon StmtList   { $$ = new SwitchStmt::CaseStmt((new IntConstant(@2, $2)), $4); }
+          ;
+                          // why colon could not be recognized? but comma did!!!
+DefaultStmt :   T_Default T_Colon StmtList      { $$ = new SwitchStmt::CaseStmt(NULL, $3); }
+            |   /* empty */                 { $$ = NULL;}
+            ;
 
 LValue    :    T_Identifier          { $$ = new FieldAccess(NULL, new Identifier(@1, $1)); }
           |    Expr '.' T_Identifier { $$ = new FieldAccess($1, new Identifier(@3, $3)); } 

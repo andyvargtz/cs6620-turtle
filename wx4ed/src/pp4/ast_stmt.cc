@@ -149,6 +149,8 @@ void BreakStmt::Check() {
     while (s != NULL) {
         if (s->GetLoopStmt() != NULL)
             return;
+        if (s->GetSwitchStmt() != NULL)
+            return;
 
         s = s->GetParent();
     }
@@ -216,4 +218,58 @@ void PrintStmt::Check() {
 
     for (int i = 0, n = args->NumElements(); i < n; ++i)
         args->Nth(i)->Check();
+}
+
+SwitchStmt::SwitchStmt(Expr *e, List<CaseStmt*> *s) {
+    Assert(e != NULL && s != NULL); // DefaultStmt can be NULL
+    (expr=e)->SetParent(this);
+    (caseStmts=s)->SetParentAll(this);
+}
+
+void SwitchStmt::BuildScope(Scope *parent) {
+    scope->SetParent(parent);
+    scope->SetSwitchStmt(this);
+
+    expr->BuildScope(scope);
+    for (int i = 0, n = caseStmts->NumElements(); i < n; ++i)
+        caseStmts->Nth(i)->BuildScope(scope);
+}
+
+void SwitchStmt::Check() {
+    expr->Check();
+    for (int i = 0, n = caseStmts->NumElements(); i < n; ++i)
+        caseStmts->Nth(i)->Check();
+}
+
+SwitchStmt::CaseStmt::CaseStmt(Expr *e, List<Stmt*> *s) {
+    Assert(s != NULL);
+    
+    intConst=e;
+    if (intConst != NULL)
+        intConst->SetParent(this);
+        
+    (caseBody=s)->SetParentAll(this);
+}
+
+void SwitchStmt::CaseStmt::BuildScope(Scope *parent) {
+    scope->SetParent(parent);
+
+    // enforced by bison
+    /*
+    if ( intConst != NULL)
+        intConst->BuildScope(scope);
+    */
+    for (int i = 0, n = caseBody->NumElements(); i < n; ++i)
+        caseBody->Nth(i)->BuildScope(scope);
+}
+
+void SwitchStmt::CaseStmt::Check() {
+    // enforced by bison
+    /*
+    if ( intConst != NULL)
+        if (!intConst->GetType()->IsEquivalentTo(Type::intType))
+            ReportError::SwitchCaseExprNotInteger(intConst);
+    */
+    for (int i = 0, n = caseBody->NumElements(); i < n; ++i)
+        caseBody->Nth(i)->Check();
 }

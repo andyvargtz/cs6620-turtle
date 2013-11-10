@@ -119,6 +119,7 @@ SINGLE_COMMENT    ("//"[^\n]*)
 "[]"                { return T_Dims;        }
 "++"                { return T_Incr;        }
 "--"                { return T_Decr;        }
+":"                 { return T_Colon;       }
 
  /* -------------------- Constants ------------------------------ */
 "true"|"false"      { yylval.boolConstant = (yytext[0] == 't');

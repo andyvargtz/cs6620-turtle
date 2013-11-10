@@ -25,6 +25,7 @@ class Type;
 class ClassDecl;
 class LoopStmt;
 class FnDecl;
+class SwitchStmt;
 
 class Scope
 {
@@ -35,6 +36,7 @@ class Scope
     Hashtable<Decl*> *table;
     ClassDecl *classDecl;
     LoopStmt *loopStmt;
+    SwitchStmt *switchStmt;
     FnDecl *fnDecl;
 
   public:
@@ -49,6 +51,9 @@ class Scope
 
     void SetLoopStmt(LoopStmt *s) { loopStmt = s; }
     LoopStmt* GetLoopStmt() { return loopStmt; }
+    
+    void SetSwitchStmt(SwitchStmt *s) { switchStmt = s; }
+    SwitchStmt* GetSwitchStmt() { return switchStmt; }
 
     void SetFnDecl(FnDecl *d) { fnDecl = d; }
     FnDecl* GetFnDecl() { return fnDecl; }
@@ -171,5 +176,29 @@ class PrintStmt : public Stmt
     void Check();
 };
 
+class SwitchStmt : public Stmt
+{
+  public:
+    class CaseStmt : public Stmt
+    {
+      protected:
+        Expr *intConst;
+        List<Stmt*> *caseBody;
+
+      public:
+        CaseStmt(Expr *intConst, List<Stmt*> *caseBody);
+        void BuildScope(Scope *parent);
+        void Check();
+    };
+
+  protected:
+    Expr *expr;
+    List<CaseStmt*> *caseStmts;
+
+  public:
+    SwitchStmt(Expr *expr, List<CaseStmt*> *caseStmts);
+    void BuildScope(Scope *parent);
+    void Check();
+};
 
 #endif
