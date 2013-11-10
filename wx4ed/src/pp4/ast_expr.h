@@ -119,9 +119,19 @@ class CompoundExpr : public Expr
   public:
     CompoundExpr(Expr *lhs, Operator *op, Expr *rhs); // for binary
     CompoundExpr(Operator *op, Expr *rhs);             // for unary
+    CompoundExpr(Expr *lhs, Operator *op);             // for postfix
     
     virtual void BuildScope(Scope *parent);
     virtual void Check();
+};
+
+class PostfixExpr : public CompoundExpr
+{
+  public:
+    PostfixExpr(Expr *lhs, Operator *op) : CompoundExpr(lhs,op) {}
+    
+    Type* GetType();
+    void Check();
 };
 
 class ArithmeticExpr : public CompoundExpr 

@@ -102,7 +102,9 @@ SINGLE_COMMENT    ("//"[^\n]*)
 "Print"             { return T_Print;       }
 "ReadInteger"       { return T_ReadInteger; }
 "ReadLine"          { return T_ReadLine;    }
-
+"switch"            { return T_Switch;      }
+"case"              { return T_Case;        }
+"default"           { return T_Default;     }
 
 
  /* -------------------- Operators ----------------------------- */
@@ -115,6 +117,8 @@ SINGLE_COMMENT    ("//"[^\n]*)
 {OPERATOR}          { return yytext[0];     }
     
 "[]"                { return T_Dims;        }
+"++"                { return T_Incr;        }
+"--"                { return T_Decr;        }
 
  /* -------------------- Constants ------------------------------ */
 "true"|"false"      { yylval.boolConstant = (yytext[0] == 't');

@@ -47,6 +47,7 @@ void yyerror(const char *msg); // standard error-handling routine
 %token   T_And T_Or T_Null T_Extends T_This T_Interface T_Implements
 %token   T_While T_For T_If T_Else T_Return T_Break
 %token   T_New T_NewArray T_Print T_ReadInteger T_ReadLine
+%token   T_Incr T_Decr T_Switch T_Case T_Default
 
 %token   <identifier> T_Identifier
 %token   <stringConstant> T_StringConstant 
@@ -85,7 +86,7 @@ void yyerror(const char *msg); // standard error-handling routine
 %nonassoc  '<' '>' T_LessEqual T_GreaterEqual
 %left      '+' '-'
 %left      '*' '/' '%'  
-%nonassoc  T_UnaryMinus '!' 
+%nonassoc  T_UnaryMinus '!' T_Incr T_Decr
 %nonassoc  '.' '['
 %nonassoc  T_Lower_Than_Else
 %nonassoc  T_Else
@@ -229,6 +230,10 @@ OptExpr   :    Expr                 { $$ = $1; }
           ;
 
 Expr      :    LValue               { $$ = $1; }
+          |    LValue T_Incr        { $$ = new PostfixExpr($1,(new Operator(@2, "++"))); }
+                                    //{ $$ = new AssignExpr($1, new Operator(@2,"="), new ArithmeticExpr($1, new Operator(@2, "+"), new IntConstant(@2,1))); }
+          |    LValue T_Decr        { $$ = new PostfixExpr($1,(new Operator(@2, "--"))); }
+                                    //{ $$ = new AssignExpr($1, new Operator(@2,"="), new ArithmeticExpr($1, new Operator(@2, "-"), new IntConstant(@2,1))); }
           |    Call
           |    Constant
           |    LValue '=' Expr      { $$ = new AssignExpr($1, new Operator(@2,"="), $3); }

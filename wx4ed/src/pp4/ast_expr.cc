@@ -118,20 +118,50 @@ CompoundExpr::CompoundExpr(Operator *o, Expr *r)
     (right=r)->SetParent(this);
 }
 
+CompoundExpr::CompoundExpr(Expr *l, Operator *o)
+  : Expr(Join(l->GetLocation(), o->GetLocation())) {
+    Assert(o != NULL && l != NULL);
+    right = NULL;
+    (op=o)->SetParent(this);
+    (left=l)->SetParent(this);
+}
+
 void CompoundExpr::BuildScope(Scope *parent) {
     scope->SetParent(parent);
 
     if (left != NULL)
         left->BuildScope(scope);
-
-    right->BuildScope(scope);
+    if (right != NULL)
+        right->BuildScope(scope);
 }
 
 void CompoundExpr::Check() {
     if (left != NULL)
         left->Check();
 
-    right->Check();
+    if (right != NULL)
+        right->Check();
+}
+
+Type* PostfixExpr::GetType() {
+    Type *ltype = left->GetType();
+
+    if (ltype->IsEquivalentTo(Type::intType))
+        return ltype;
+    else
+        return Type::errorType;
+}
+
+void PostfixExpr::Check() {
+    if (left != NULL)
+        left->Check();
+        
+    Type *ltype = left->GetType();
+
+    if (ltype->IsEquivalentTo(Type::intType))
+        return;
+    else
+        ReportError::IncompatibleOperand(op, ltype);
 }
 
 Type* ArithmeticExpr::GetType() {
