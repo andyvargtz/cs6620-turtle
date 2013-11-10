@@ -40,7 +40,6 @@ void yyerror(const char *msg); // standard error-handling routine
     SwitchStmt *switchStmt;
     SwitchStmt::CaseStmt *caseStmt;
     List<SwitchStmt::CaseStmt*> *caseStmtList;
-    SwitchStmt::DefaultStmt *defaultStmt;
 }
 
 
