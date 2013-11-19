@@ -235,6 +235,8 @@ Type* RelationalExpr::GetType() {
 }
 
 void RelationalExpr::Check() {
+    left->Check();
+    right->Check();
     Type *rtype = right->GetType();
     Type *ltype = left->GetType();
 
@@ -374,12 +376,15 @@ void ArrayAccess::BuildScope(Scope *parent) {
 void ArrayAccess::Check() {
     base->Check();
     subscript->Check();
-
+    
+    if (base->GetType() == Type::errorType) // The base is an undeclared variable, so we don't need to further check the fields.
+        return;
+    
     ArrayType *t = dynamic_cast<ArrayType*>(base->GetType());
     if (t == NULL)
         ReportError::BracketsOnNonArray(base);
 
-    if (!subscript->GetType()->IsEqualTo(Type::intType))
+    if (subscript->GetType() != Type::errorType && !subscript->GetType()->IsEqualTo(Type::intType))
         ReportError::SubscriptNotInteger(subscript);
 }
      
@@ -427,9 +432,12 @@ void FieldAccess::BuildScope(Scope *parent) {
 }
 
 void FieldAccess::Check() {
-    if (base != NULL)
+    if (base != NULL) {
         base->Check();
 
+        if (base->GetType() == Type::errorType) // The base is an undeclared variable, so we don't need to further check the fields.
+            return;
+    }
     Decl *d;
     Type *t;
 
@@ -537,7 +545,7 @@ void Call::Check() {
     } else {
         t = base->GetType();
         if (! t->typeDeclared) {return;} // No need to check the fields of undeclared type.
-        if ((d = GetFieldDecl(field, t)) == NULL) {
+        if ((d = GetFieldDecl(field, t)) == NULL) {  //&& f->GetType() == lookup->GetType()
             CheckActuals(d);
 
             if (dynamic_cast<ArrayType*>(t) == NULL ||
@@ -618,7 +626,7 @@ void NewArrayExpr::BuildScope(Scope *parent) {
 void NewArrayExpr::Check() {
     size->Check();
 
-    if (!size->GetType()->IsEqualTo(Type::intType))
+    if (size->GetType() != Type::errorType && !size->GetType()->IsEqualTo(Type::intType))
         ReportError::NewArraySizeNotInteger(size);
 
     if (elemType->IsPrimitive() && !elemType->IsEquivalentTo(Type::voidType))

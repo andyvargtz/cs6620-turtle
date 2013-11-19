@@ -192,6 +192,9 @@ void ReturnStmt::Check() {
 
     if (!given->IsEquivalentTo(expected))
         ReportError::ReturnMismatch(this, given, expected);
+    
+    //if (given == Type::errorType)
+    //    ReportError::ReturnMismatch(this, Type::voidType, expected);
 }
   
 PrintStmt::PrintStmt(List<Expr*> *a) {    
