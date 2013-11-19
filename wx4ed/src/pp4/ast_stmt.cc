@@ -193,8 +193,10 @@ void ReturnStmt::Check() {
     if (!given->IsEquivalentTo(expected))
         ReportError::ReturnMismatch(this, given, expected);
     
+    EmptyExpr *ee = dynamic_cast<EmptyExpr*>(expr);
+    if (ee != NULL && expected != Type::voidType)
     //if (given == Type::errorType)
-    //    ReportError::ReturnMismatch(this, Type::voidType, expected);
+        ReportError::ReturnMismatch(this, Type::voidType, expected);
 }
   
 PrintStmt::PrintStmt(List<Expr*> *a) {    
