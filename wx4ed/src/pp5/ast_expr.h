@@ -97,6 +97,13 @@ class CompoundExpr : public Expr
   public:
     CompoundExpr(Expr *lhs, Operator *op, Expr *rhs); // for binary
     CompoundExpr(Operator *op, Expr *rhs);             // for unary
+    CompoundExpr(Expr *lhs, Operator *op);             // for postfix
+};
+
+class PostfixExpr : public CompoundExpr
+{
+  public:
+    PostfixExpr(Expr *lhs, Operator *op) : CompoundExpr(lhs,op) {}
 };
 
 class ArithmeticExpr : public CompoundExpr 

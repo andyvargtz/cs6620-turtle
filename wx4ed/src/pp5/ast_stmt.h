@@ -114,5 +114,25 @@ class PrintStmt : public Stmt
     PrintStmt(List<Expr*> *arguments);
 };
 
+class SwitchStmt : public Stmt
+{
+  public:
+    class CaseStmt : public Stmt
+    {
+      protected:
+        Expr *intConst;
+        List<Stmt*> *caseBody;
+
+      public:
+        CaseStmt(Expr *intConst, List<Stmt*> *caseBody);
+    };
+
+  protected:
+    Expr *expr;
+    List<CaseStmt*> *caseStmts;
+
+  public:
+    SwitchStmt(Expr *expr, List<CaseStmt*> *caseStmts);
+};
 
 #endif
