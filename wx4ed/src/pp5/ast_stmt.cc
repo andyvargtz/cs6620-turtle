@@ -52,6 +52,8 @@ void Program::Check() {
 
     for (int i = 0, n = decls->NumElements(); i < n; ++i)
         decls->Nth(i)->BuildScope();
+        
+    // Just build scope, no real check.
 }
 
 void Program::Emit() {

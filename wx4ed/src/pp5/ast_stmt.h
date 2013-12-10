@@ -36,14 +36,14 @@ class Scope
     Scope();
 
     void AddDecl(Decl *d);
-    friend ostream& operator<<(ostream& out, Scope *s);
+    friend std::ostream& operator<<(std::ostream& out, Scope *s);
 };
 
 class Program : public Node
 {
   public:
     static Scope *gScope;
-    static stack<const char*> *gBreakLabels;
+    static std::stack<const char*> *gBreakLabels;
 
   protected:
      List<Decl*> *decls;
