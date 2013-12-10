@@ -128,6 +128,7 @@ void CodeGenerator::GenReturn(Location *val)
 
 BeginFunc *CodeGenerator::GenBeginFunc()
 {
+  localOffset = OffsetToFirstLocal;
   BeginFunc *result = new BeginFunc;
   code.push_back(result);
   return result;
