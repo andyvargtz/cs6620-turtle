@@ -14,6 +14,9 @@ Location* CodeGenerator::ThisPtr= new Location(fpRelative, 4, "this");
   
 CodeGenerator::CodeGenerator()
 {
+  code = new List<Instruction*>();
+  localOffset = OffsetToFirstLocal;
+  mainDefined = false;
 }
 
 char *CodeGenerator::NewLabel()
@@ -35,10 +38,19 @@ Location *CodeGenerator::GenTempVar()
      in stack frame for use as temporary. Until you
      do that, the assert below will always fail to remind
      you this needs to be implemented  */
+  result = new Location(fpRelative, localOffset, temp);
+  localOffset -= VarSize;
   Assert(result != NULL);
   return result;
 }
 
+ 
+Location *CodeGenerator::GenLocalVar(const char *name, int size)
+{
+    Location *result = new Location(fpRelative, localOffset, name);
+    localOffset -= size;
+    return result;
+}
  
 Location *CodeGenerator::GenLoadConstant(int value)
 {
@@ -92,6 +104,8 @@ Location *CodeGenerator::GenBinaryOp(const char *opName, Location *op1,
 
 void CodeGenerator::GenLabel(const char *label)
 {
+  if (strcmp(label, "main") == 0)
+    mainDefined = true;
   code.push_back(new Label(label));
 }
 
@@ -191,6 +205,9 @@ void CodeGenerator::GenVTable(const char *className, List<const char *> *methodL
 
 void CodeGenerator::DoFinalCodeGen()
 {
+  if (!mainDefined)
+    ReportError::NoMainFound();
+    
   if (IsDebugOn("tac")) { // if debug don't translate to mips, just print Tac
     std::list<Instruction*>::iterator p;
     for (p= code.begin(); p != code.end(); ++p) {
