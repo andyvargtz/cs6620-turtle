@@ -36,10 +36,6 @@ void yyerror(const char *msg); // standard error-handling routine
     Stmt *stmt;
     List<Stmt*> *stmtList;
     LValue *lvalue;
-    
-    SwitchStmt *switchStmt;
-    SwitchStmt::CaseStmt *caseStmt;
-    List<SwitchStmt::CaseStmt*> *caseStmtList;
 }
 
 
@@ -51,7 +47,6 @@ void yyerror(const char *msg); // standard error-handling routine
 %token   T_And T_Or T_Null T_Extends T_This T_Interface T_Implements
 %token   T_While T_For T_If T_Else T_Return T_Break
 %token   T_New T_NewArray T_Print T_ReadInteger T_ReadLine
-%token   T_Incr T_Decr T_Switch T_Case T_Default T_Colon
 
 %token   <identifier> T_Identifier
 %token   <stringConstant> T_StringConstant 
@@ -76,10 +71,6 @@ void yyerror(const char *msg); // standard error-handling routine
 %type <stmt>      Stmt StmtBlock OptElse
 %type <stmtList>  StmtList
 
-%type <switchStmt>      SwitchStmt
-%type <caseStmt>        CaseStmt DefaultStmt
-%type <caseStmtList>    CaseStmts
-
   
 /* Precedence and associativity
  * ----------------------------
@@ -93,7 +84,7 @@ void yyerror(const char *msg); // standard error-handling routine
 %nonassoc  '<' '>' T_LessEqual T_GreaterEqual
 %left      '+' '-'
 %left      '*' '/' '%'  
-%nonassoc  T_UnaryMinus '!' T_Incr T_Decr
+%nonassoc  T_UnaryMinus '!' 
 %nonassoc  '.' '['
 %nonassoc  T_Lower_Than_Else
 %nonassoc  T_Else
@@ -107,6 +98,9 @@ Program   :    DeclList            {
                                       @1; 
                                       Program *program = new Program($1);
                                       // if no errors, advance to next phase
+                                      //if (ReportError::NumErrors() == 0) 
+                                          //program->Check(); 
+                                      // comment out prev line to skip semantic analysis
                                       if (ReportError::NumErrors() == 0) 
                                           program->Emit(); 
                                     }
@@ -219,23 +213,7 @@ Stmt      :    OptExpr ';'          { $$ = $1; }
           |    T_Print '(' ExprList ')' ';'  
                                     { $$ = new PrintStmt($3); }
           |    T_Break ';'          { $$ = new BreakStmt(@1); }
-          |    SwitchStmt           { $$ = $1; }
           ;
-
-SwitchStmt:    T_Switch '(' Expr ')' '{' CaseStmts DefaultStmt '}' { if ($7) $6->Append($7);
-                                                                     $$ = new SwitchStmt($3, $6);}
-          ;
-
-CaseStmts :    CaseStmts CaseStmt   { ($$ = $1)->Append($2); }
-          |    CaseStmt             { ($$ = new List<SwitchStmt::CaseStmt*>)->Append($1);}
-          ;
-                                    // why colon could not be recognized? but comma did!!!
-CaseStmt  :    T_Case T_IntConstant T_Colon StmtList   { $$ = new SwitchStmt::CaseStmt((new IntConstant(@2, $2)), $4); }
-          ;
-                          // why colon could not be recognized? but comma did!!!
-DefaultStmt :   T_Default T_Colon StmtList      { $$ = new SwitchStmt::CaseStmt(NULL, $3); }
-            |   /* empty */                 { $$ = NULL;}
-            ;
 
 LValue    :    T_Identifier          { $$ = new FieldAccess(NULL, new Identifier(@1, $1)); }
           |    Expr '.' T_Identifier { $$ = new FieldAccess($1, new Identifier(@3, $3)); } 
@@ -253,10 +231,6 @@ OptExpr   :    Expr                 { $$ = $1; }
           ;
 
 Expr      :    LValue               { $$ = $1; }
-          |    LValue T_Incr        { $$ = new PostfixExpr($1,(new Operator(@2, "++"))); }
-                                    //{ $$ = new AssignExpr($1, new Operator(@2,"="), new ArithmeticExpr($1, new Operator(@2, "+"), new IntConstant(@2,1))); }
-          |    LValue T_Decr        { $$ = new PostfixExpr($1,(new Operator(@2, "--"))); }
-                                    //{ $$ = new AssignExpr($1, new Operator(@2,"="), new ArithmeticExpr($1, new Operator(@2, "-"), new IntConstant(@2,1))); }
           |    Call
           |    Constant
           |    LValue '=' Expr      { $$ = new AssignExpr($1, new Operator(@2,"="), $3); }
@@ -283,7 +257,7 @@ Expr      :    LValue               { $$ = $1; }
                                     { $$ = new ReadIntegerExpr(Join(@1,@3)); }
           |    T_ReadLine '(' ')'   { $$ = new ReadLineExpr(Join(@1,@3)); }
           |    T_New '(' T_Identifier ')' 
-                                    { $$ = new NewExpr(Join(@1,@4),new NamedType(new Identifier(@3,$3))); }
+                                    { $$ = new NewExpr(Join(@1,@3),new NamedType(new Identifier(@3,$3))); }
           |    T_NewArray '(' Expr ',' Type ')' 
                                     { $$ = new NewArrayExpr(Join(@1,@6),$3, $5); }
           |    T_This               { $$ = new This(@1); }

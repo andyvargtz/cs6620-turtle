@@ -104,7 +104,6 @@ SINGLE_COMMENT    ("//"[^\n]*)
 "ReadLine"          { return T_ReadLine;    }
 
 
-
  /* -------------------- Operators ----------------------------- */
 "<="                { return T_LessEqual;   }
 ">="                { return T_GreaterEqual;}
@@ -115,9 +114,6 @@ SINGLE_COMMENT    ("//"[^\n]*)
 {OPERATOR}          { return yytext[0];     }
     
 "[]"                { return T_Dims;        }
-"++"                { return T_Incr;        }
-"--"                { return T_Decr;        }
-":"                 { return T_Colon;       }
 
  /* -------------------- Constants ------------------------------ */
 "true"|"false"      { yylval.boolConstant = (yytext[0] == 't');
