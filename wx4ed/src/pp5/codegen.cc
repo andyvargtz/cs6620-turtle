@@ -9,12 +9,13 @@
 #include <string.h>
 #include "tac.h"
 #include "mips.h"
+#include "errors.h"
 
 Location* CodeGenerator::ThisPtr= new Location(fpRelative, 4, "this");
   
 CodeGenerator::CodeGenerator()
 {
-  code = new List<Instruction*>();
+  //code = new List<Instruction*>();
   localOffset = OffsetToFirstLocal;
   mainDefined = false;
 }
