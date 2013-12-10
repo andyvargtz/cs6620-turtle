@@ -111,10 +111,10 @@ DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
           |    Decl                 { ($$ = new List<Decl*>)->Append($1); }
           ;
 
-Decl      :    ClassDecl
+Decl      :    ClassDecl            { $$=$1; }
           |    FnDecl               { $$=$1; }
           |    VarDecl              { $$=$1; }
-          |    IntfDecl 
+          |    IntfDecl             { $$=$1; }
           ;
 
 VarDecl   :    Variable ';' 
